@@ -1,6 +1,8 @@
 syntax = "proto3";
 package echopb;
 
+option go_package = "./echopb";
+
 import "google/api/annotations.proto";
 
 message EchoMessage {
@@ -10,7 +12,7 @@ message EchoMessage {
 service EchoService {
   rpc Echo(EchoMessage) returns (EchoMessage) {
     option (google.api.http) = {
-      post: "/v1/echo"
+      post: "/aas/v1/token"
       body: "*"
     };
   }

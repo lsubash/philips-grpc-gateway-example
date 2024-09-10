@@ -42,7 +42,7 @@ var echoCmd = &cobra.Command{
 		defer conn.Close()
 		client := pb.NewEchoServiceClient(conn)
 
-		msg, err := client.Echo(context.Background(), &pb.EchoMessage{strings.Join(os.Args[2:], " ")})
+		msg, err := client.Echo(context.Background(), &pb.EchoMessage{Value: strings.Join(os.Args[2:], " ")})
 		println(msg.Value)
 
 	},

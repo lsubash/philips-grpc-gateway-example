@@ -9,10 +9,11 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"bytes"
 
 	"github.com/philips/grpc-gateway-example/pkg/ui/data/swagger"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/philips/go-bindata-assetfs"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -35,9 +36,31 @@ func init() {
 	RootCmd.AddCommand(serveCmd)
 }
 
-type myService struct{}
+type myService struct{
+	pb.UnimplementedEchoServiceServer
+}
 
 func (m *myService) Echo(c context.Context, s *pb.EchoMessage) (*pb.EchoMessage, error) {
+	fmt.Printf("rpc request Echo\n") 
+	url := "http://localhost:9050/aas/v1/token"
+        data := []byte(s.Value)
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+        if err != nil {
+                fmt.Printf("PUT Failed")
+		log.Fatal(err)
+        }
+        req.Header.Set("Content-Type", "application/json")
+
+        client := &http.Client{}
+        resp, err := client.Do(req)
+        if err != nil {
+                fmt.Printf("PUT Failed 2")
+		log.Fatal(err)
+        }
+
+        defer resp.Body.Close()
+
 	fmt.Printf("rpc request Echo(%q)\n", s.Value)
 	return s, nil
 }
@@ -84,6 +107,7 @@ func serve() {
 	dcreds := credentials.NewTLS(&tls.Config{
 		ServerName: demoAddr,
 		RootCAs:    demoCertPool,
+		InsecureSkipVerify: true,
 	})
 	dopts := []grpc.DialOption{grpc.WithTransportCredentials(dcreds)}
 
@@ -106,6 +130,8 @@ func serve() {
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("TEST1\n")
 
 	srv := &http.Server{
 		Addr:    demoAddr,
