@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"bytes"
 
 	"github.com/philips/grpc-gateway-example/pkg/ui/data/swagger"
 
@@ -42,24 +41,35 @@ type myService struct{
 
 func (m *myService) Echo(c context.Context, s *pb.EchoMessage) (*pb.EchoMessage, error) {
 	fmt.Printf("rpc request Echo\n") 
-	url := "http://localhost:9050/aas/v1/token"
-        data := []byte(s.Value)
+	url := "https://10.34.40.201:30444/aas/v1/version"
+        //data := []byte(s.Value)
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
         if err != nil {
-                fmt.Printf("PUT Failed")
+                fmt.Printf("GET Failed")
 		log.Fatal(err)
         }
-        req.Header.Set("Content-Type", "application/json")
+	//req.Header.Set("Content-Type", "application/json")
 
-        client := &http.Client{}
+        client := &http.Client{Transport: tr}
         resp, err := client.Do(req)
         if err != nil {
-                fmt.Printf("PUT Failed 2")
+                fmt.Printf("GET Failed 2")
 		log.Fatal(err)
         }
 
         defer resp.Body.Close()
+
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", bodyText)
 
 	fmt.Printf("rpc request Echo(%q)\n", s.Value)
 	return s, nil
