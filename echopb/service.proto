@@ -4,15 +4,56 @@ package echopb;
 option go_package = "./echopb";
 
 import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
 
 message EchoMessage {
  string value = 1;
 }
 
+message EchoReply {
+ string value = 1;
+}
+
+message Aastoken {
+ string username = 1;
+ string password = 2;
+}
+
 service EchoService {
-  rpc Echo(EchoMessage) returns (EchoMessage) {
+  rpc Aasversion(EchoMessage) returns (EchoReply) {
+    option (google.api.http) = {
+      get: "/aas/v1/version"
+    };
+  }
+
+  rpc Aasgettoken(Aastoken) returns (EchoReply) {
     option (google.api.http) = {
       post: "/aas/v1/token"
+      body: "*"
+    };
+  }
+
+  rpc Cmsversion(EchoMessage) returns (.google.protobuf.StringValue) {
+    option (google.api.http) = {
+      get: "/cms/v1/version"
+    };
+  }
+
+  rpc Cmscacert(EchoMessage) returns (EchoReply) {
+    option (google.api.http) = {
+      get: "/cms/v1/ca-certificates"
+    };
+  }
+
+  rpc Hvsversion(EchoMessage) returns (EchoReply) {
+    option (google.api.http) = {
+      get: "/hvs/v2/version"
+    };
+  }
+
+  rpc Hvsprovisionaik(EchoMessage) returns (EchoReply) {
+    option (google.api.http) = {
+      post: "/hvs/v2/aik"
       body: "*"
     };
   }

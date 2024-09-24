@@ -9,7 +9,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
-
+    //"bytes"
 	"github.com/philips/grpc-gateway-example/pkg/ui/data/swagger"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	pb "github.com/philips/grpc-gateway-example/echopb"
 )
 
@@ -39,11 +39,10 @@ type myService struct{
 	pb.UnimplementedEchoServiceServer
 }
 
-func (m *myService) Echo(c context.Context, s *pb.EchoMessage) (*pb.EchoMessage, error) {
-	fmt.Printf("rpc request Echo\n") 
-	url := "https://10.34.40.201:30444/aas/v1/version"
-        //data := []byte(s.Value)
-
+func (m *myService) Cmsversion(c context.Context, s *pb.EchoMessage) (*wrapperspb.StringValue, error) {
+//func (m *myService) Cmsversion(c context.Context, s *pb.EchoMessage) (*pb.EchoReply, error) {
+	fmt.Printf("Enter Cmsversion\n")
+	url := "https://10.34.40.201:30445/cms/v1/version"
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -53,12 +52,11 @@ func (m *myService) Echo(c context.Context, s *pb.EchoMessage) (*pb.EchoMessage,
                 fmt.Printf("GET Failed")
 		log.Fatal(err)
         }
-	//req.Header.Set("Content-Type", "application/json")
 
         client := &http.Client{Transport: tr}
         resp, err := client.Do(req)
         if err != nil {
-                fmt.Printf("GET Failed 2")
+        	fmt.Printf("GET Failed 2")
 		log.Fatal(err)
         }
 
@@ -71,8 +69,157 @@ func (m *myService) Echo(c context.Context, s *pb.EchoMessage) (*pb.EchoMessage,
 	}
 	fmt.Printf("%s\n", bodyText)
 
-	fmt.Printf("rpc request Echo(%q)\n", s.Value)
-	return s, nil
+	//return bodyText, nil
+	str := string(bodyText)
+	return wrapperspb.String(str), nil
+}
+
+func (m *myService) Cmscacert(c context.Context, s *pb.EchoMessage) (*pb.EchoReply, error) {
+	fmt.Printf("Enter Cmscacert\n")
+	url := "https://10.34.40.201:30445/cms/v1/ca-certificates"
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+			fmt.Printf("GET Failed")
+	log.Fatal(err)
+	}
+
+	client := &http.Client{Transport: tr}
+	req.Header.Set("Accept", "application/x-pem-file")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("GET Failed 2")
+	log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", bodyText)
+
+	//return bodyText, nil
+	return &pb.EchoReply{
+		Value: fmt.Sprintf("\n%s\n", bodyText),
+	}, nil
+}
+
+func (m *myService) Aasversion(c context.Context, s *pb.EchoMessage) (*pb.EchoReply, error) {
+	fmt.Printf("Enter Aasversion\n") 
+	url := "https://10.34.40.201:30444/aas/v1/version"
+        //data := []byte(s.Value)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+        if err != nil {
+                fmt.Printf("GET Failed")
+		log.Fatal(err)
+        }
+
+        client := &http.Client{Transport: tr}
+        resp, err := client.Do(req)
+        if err != nil {
+        	fmt.Printf("GET Failed 2")
+		log.Fatal(err)
+        }
+
+        defer resp.Body.Close()
+
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", bodyText)
+
+	//return bodyText, nil
+	return &pb.EchoReply{
+		Value: fmt.Sprintf("\n%s\n", bodyText),
+	}, nil
+}
+
+
+func (m *myService) Hvsversion(c context.Context, s *pb.EchoMessage) (*pb.EchoReply, error) {
+	fmt.Printf("Enter Hvsversion\n")
+	url := "https://10.34.40.201:30443/hvs/v2/version"
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+        if err != nil {
+                fmt.Printf("GET Failed")
+		log.Fatal(err)
+        }
+
+        client := &http.Client{Transport: tr}
+        resp, err := client.Do(req)
+        if err != nil {
+        	fmt.Printf("GET Failed 2")
+		log.Fatal(err)
+        }
+
+        defer resp.Body.Close()
+
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", bodyText)
+
+	//return bodyText, nil
+	return &pb.EchoReply{
+		Value: fmt.Sprintf("\n%s\n", bodyText),
+	}, nil
+}
+
+func (m *myService) Aasgettoken(c context.Context, s *pb.Aastoken) (*pb.EchoReply, error) {
+	fmt.Printf("Enter Aasgettoken\n")
+
+	url := "https://10.34.40.201:30444/aas/v1/token"
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	var data2 = strings.NewReader(fmt.Sprintf("{\n  \"username\" : \"%s\", \"password\" : \"%s\" \n}", s.Username,s.Password))
+
+	req, err := http.NewRequest(http.MethodPost, url, data2)
+	if err != nil {
+		fmt.Printf("GET Failed")
+		log.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Transport: tr}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("GET Failed 2")
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", bodyText)
+
+	//return bodyText, nil
+	return &pb.EchoReply{
+		Value: fmt.Sprintf("\n%s\n", bodyText),
+	}, nil
 }
 
 func newServer() *myService {
@@ -140,8 +287,6 @@ func serve() {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("TEST1\n")
 
 	srv := &http.Server{
 		Addr:    demoAddr,
