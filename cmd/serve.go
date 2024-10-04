@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	pb "github.com/philips/grpc-gateway-example/echopb"
+	"google.golang.org/grpc/metadata"
 )
 
 // serveCmd represents the serve command
@@ -47,6 +48,14 @@ func (m *myService) Cmsversion(c context.Context, s *pb.EchoMessage) (*wrappersp
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
+	md, ok := metadata.FromIncomingContext(c)
+	//fmt.Printf("context.Context %s\n", context.Context)
+	//fmt.Printf("pb.EchoMessage %s\n", pb.EchoMessage)
+
+	fmt.Printf("md %s\n", md)
+	fmt.Printf("ok %s\n", ok)
+
+
 	req, err := http.NewRequest(http.MethodGet, url, nil)
         if err != nil {
                 fmt.Printf("GET Failed")
@@ -73,7 +82,7 @@ func (m *myService) Cmsversion(c context.Context, s *pb.EchoMessage) (*wrappersp
 	str := string(bodyText)
 	return wrapperspb.String(str), nil
 }
-
+/*
 func (m *myService) Cmscacert(c context.Context, s *pb.EchoMessage) (*pb.EchoReply, error) {
 	fmt.Printf("Enter Cmscacert\n")
 	url := "https://10.34.40.201:30445/cms/v1/ca-certificates"
@@ -105,9 +114,107 @@ func (m *myService) Cmscacert(c context.Context, s *pb.EchoMessage) (*pb.EchoRep
 	fmt.Printf("%s\n", bodyText)
 
 	//return bodyText, nil
+	str := string(bodyText)
+	//return wrapperspb.String(str), nil
+	//return wrapperspb.Bytes(bodyText), nil
+
+	//return bodyText, nil
 	return &pb.EchoReply{
-		Value: fmt.Sprintf("\n%s\n", bodyText),
+		Value: str,
 	}, nil
+}*/
+
+func (m *myService) Cmscacert(c context.Context, s *pb.EchoMessage) (*pb.ResponseBodyOut, error) {
+	fmt.Printf("Enter Cmscacert\n")
+	url := "https://10.34.40.201:30445/cms/v1/ca-certificates"
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+			fmt.Printf("GET Failed")
+	log.Fatal(err)
+	}
+
+	client := &http.Client{Transport: tr}
+	req.Header.Set("Accept", "application/x-pem-file")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("GET Failed 2")
+	log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", bodyText)
+
+	//return bodyText, nil
+	str := string(bodyText)
+	//return wrapperspb.String(str), nil
+	//return wrapperspb.Bytes(bodyText), nil
+
+	//return bodyText, nil
+	return &pb.ResponseBodyOut{
+		Response: &pb.ResponseBodyOut_Response{
+			Data: str,
+		},
+	}, nil
+}
+
+func (m *myService) Cmstlscert(c context.Context, s *pb.EchoMessage) (*wrapperspb.StringValue, error) {
+	fmt.Printf("Enter Cmscacert\n")
+	url := "https://10.34.40.201:30445/cms/v1/certificates?certType=tls"
+
+	md, ok := metadata.FromIncomingContext(c)
+
+	fmt.Printf("md %s\n", md)
+	fmt.Printf("ok %s\n", ok)
+	//fmt.Printf("AUTH: %s\n", md["authorization"])	
+
+	if t, ok := md["authorization"]; ok {
+		fmt.Printf("authorization from metadata:\n")
+		for i, e := range t {
+			fmt.Printf(" %d. %s\n", i, e)
+		}
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+			fmt.Printf("GET Failed")
+	log.Fatal(err)
+	}
+
+	client := &http.Client{Transport: tr}
+	req.Header.Set("Accept", "application/x-pem-file")
+
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("GET Failed 2")
+	log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//fmt.Printf("%s\n", bodyText)
+
+	//return bodyText, nil
+	str := string(bodyText)
+	return wrapperspb.String(str), nil
 }
 
 func (m *myService) Aasversion(c context.Context, s *pb.EchoMessage) (*pb.EchoReply, error) {
@@ -184,13 +291,19 @@ func (m *myService) Hvsversion(c context.Context, s *pb.EchoMessage) (*pb.EchoRe
 	}, nil
 }
 
-func (m *myService) Aasgettoken(c context.Context, s *pb.Aastoken) (*pb.EchoReply, error) {
+func (m *myService) Aasgettoken(c context.Context, s *pb.Aastoken) (*wrapperspb.StringValue, error) {
 	fmt.Printf("Enter Aasgettoken\n")
 
 	url := "https://10.34.40.201:30444/aas/v1/token"
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
+
+	md, ok := metadata.FromIncomingContext(c)
+
+	fmt.Printf("md %s\n", md)
+	fmt.Printf("ok %s\n", ok)
+	fmt.Printf("pb.Aastoken %s\n", s) 
 
 	var data2 = strings.NewReader(fmt.Sprintf("{\n  \"username\" : \"%s\", \"password\" : \"%s\" \n}", s.Username,s.Password))
 
@@ -214,12 +327,70 @@ func (m *myService) Aasgettoken(c context.Context, s *pb.Aastoken) (*pb.EchoRepl
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("bodytext response: %s\n", bodyText)
+
+	//return bodyText, nil
+	str := string(bodyText)
+	return wrapperspb.String(str), nil
+
+}
+
+func (m *myService) Aasgettoken1(c context.Context, s *pb.Data) (*wrapperspb.StringValue, error) {
+	fmt.Printf("Enter Aasgettoken\n")
+
+	md, ok := metadata.FromIncomingContext(c)
+
+	fmt.Printf("md %s\n", md)
+	fmt.Printf("ok %s\n", ok)
+	fmt.Printf("stream:  %s\n", s.Bytes)
+	fmt.Printf("c:  %s\n", c)
+
+
+	str := "TEST"
+	return wrapperspb.String(str), nil
+
+}
+
+func (m *myService) Hvsprivacyca(c context.Context, s *pb.EchoMessage) (*wrapperspb.StringValue, error) {
+	fmt.Printf("Enter Hvsprivacyca\n")
+	url := "https://10.34.40.201:30443/hvs/v2/ca-certificates/aik"
+
+	md, ok := metadata.FromIncomingContext(c)
+
+	fmt.Printf("md %s\n", md)
+	fmt.Printf("ok %s\n", ok)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+			fmt.Printf("GET Failed")
+	log.Fatal(err)
+	}
+
+	client := &http.Client{Transport: tr}
+	req.Header.Set("Accept", "application/x-pem-file")
+
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("GET Failed 2")
+	log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Printf("%s\n", bodyText)
 
 	//return bodyText, nil
-	return &pb.EchoReply{
-		Value: fmt.Sprintf("\n%s\n", bodyText),
-	}, nil
+	str := string(bodyText)
+	return wrapperspb.String(str), nil
 }
 
 func newServer() *myService {

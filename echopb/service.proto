@@ -19,6 +19,18 @@ message Aastoken {
  string password = 2;
 }
 
+message Data { bytes bytes = 32; }
+message IdMessage {
+  string uuid = 1;
+}
+
+message ResponseBodyOut {
+  message Response {
+    string data = 1;
+  }
+  Response response = 2;
+}
+
 service EchoService {
   rpc Aasversion(EchoMessage) returns (EchoReply) {
     option (google.api.http) = {
@@ -26,12 +38,20 @@ service EchoService {
     };
   }
 
-  rpc Aasgettoken(Aastoken) returns (EchoReply) {
+  rpc Aasgettoken(Aastoken) returns (.google.protobuf.StringValue) {
     option (google.api.http) = {
       post: "/aas/v1/token"
       body: "*"
     };
   }
+
+  rpc Aasgettoken1(Data) returns (.google.protobuf.StringValue)  {
+    option (google.api.http) = {
+      post: "/aas/v1/token1"
+      body: "*"
+    };
+  }
+
 
   rpc Cmsversion(EchoMessage) returns (.google.protobuf.StringValue) {
     option (google.api.http) = {
@@ -39,9 +59,25 @@ service EchoService {
     };
   }
 
-  rpc Cmscacert(EchoMessage) returns (EchoReply) {
+  /*rpc Cmscacert(EchoMessage) returns (EchoReply) {
     option (google.api.http) = {
       get: "/cms/v1/ca-certificates"
+      response_body : "value"
+    };
+  }*/
+
+  rpc Cmscacert(EchoMessage) returns (ResponseBodyOut) {
+    option (google.api.http) = {
+      get: "/cms/v1/ca-certificates"
+      response_body : "response"
+    };
+  }
+  
+
+  rpc Cmstlscert(EchoMessage) returns (.google.protobuf.StringValue) {
+    option (google.api.http) = {
+      post: "/cms/v1/certificates"
+      body: "*"
     };
   }
 
@@ -51,10 +87,9 @@ service EchoService {
     };
   }
 
-  rpc Hvsprovisionaik(EchoMessage) returns (EchoReply) {
+  rpc Hvsprivacyca(EchoMessage) returns (.google.protobuf.StringValue) {
     option (google.api.http) = {
-      post: "/hvs/v2/aik"
-      body: "*"
+      get: "/hvs/v2/ca-certificates/aik"
     };
   }
 }
