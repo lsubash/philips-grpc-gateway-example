@@ -5,6 +5,15 @@ option go_package = "./echopb";
 
 import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
+
+message DynamicMessage {
+  google.protobuf.Struct data = 1;
+}
+
+message MyStructRequest {
+  google.protobuf.Struct data = 1; // Using Struct for dynamic data
+}
 
 message EchoMessage {
  string value = 1;
@@ -45,13 +54,12 @@ service EchoService {
     };
   }
 
-  rpc Aasgettoken1(Data) returns (.google.protobuf.StringValue)  {
+  rpc Aasgettoken1(MyStructRequest) returns (.google.protobuf.StringValue)  {
     option (google.api.http) = {
       post: "/aas/v1/token1"
       body: "*"
     };
   }
-
 
   rpc Cmsversion(EchoMessage) returns (.google.protobuf.StringValue) {
     option (google.api.http) = {
@@ -66,10 +74,10 @@ service EchoService {
     };
   }*/
 
-  rpc Cmscacert(EchoMessage) returns (ResponseBodyOut) {
+  rpc Cmscacert(EchoMessage) returns (.google.protobuf.StringValue) {
     option (google.api.http) = {
       get: "/cms/v1/ca-certificates"
-      response_body : "response"
+      /*response_body : "response"*/
     };
   }
   
@@ -87,9 +95,42 @@ service EchoService {
     };
   }
 
-  rpc Hvsprivacyca(EchoMessage) returns (.google.protobuf.StringValue) {
+  rpc Hvsprivacyca(EchoMessage) returns (EchoReply) {
     option (google.api.http) = {
       get: "/hvs/v2/ca-certificates/aik"
+      response_body : "value"
+    };
+  }
+
+  rpc HvsIdentityChallengeRequest(MyStructRequest) returns (EchoReply) {
+    option (google.api.http) = {
+      post: "/hvs/v2/privacyca/identity-challenge-request"
+      body: "*"
+      response_body : "value"
+    };
+  }
+
+  rpc HvsIdentityChallengeResponse(MyStructRequest) returns (EchoReply) {
+    option (google.api.http) = {
+      post: "/hvs/v2/privacyca/identity-challenge-response"
+      body: "*"
+      response_body : "value"
+    };
+  }
+
+  rpc AasDownloadApiToken(MyStructRequest) returns (EchoReply) {
+    option (google.api.http) = {
+      post: "/aas/v1/custom-claims-token"
+      body: "*"
+      response_body : "value"
+    };
+  }
+
+  rpc AasDownloadCredentials(MyStructRequest) returns (EchoReply) {
+    option (google.api.http) = {
+      post: "/aas/v1/credentials"
+      body: "*"
+      response_body : "value"
     };
   }
 }
